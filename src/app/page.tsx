@@ -47,7 +47,7 @@ export default async function Home({
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-600 text-xs font-semibold uppercase tracking-wider mb-4 animate-fade-in-up">
               <Sparkles className="w-3 h-3" />
-              <span>Powered by Gemini AI</span>
+              <span>Powered by 2Caps Team</span>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -110,7 +110,7 @@ export default async function Home({
         </div>
 
         <footer className="w-full py-8 text-center text-slate-400 text-sm border-t border-slate-100 bg-white">
-          &copy; {new Date().getFullYear()} Vancer. Powered by 2caps team.
+          &copy; {new Date().getFullYear()} Vancer. Powered by 2Caps Team.
         </footer>
       </main>
     );
