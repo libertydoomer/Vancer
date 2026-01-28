@@ -8,6 +8,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { syncUser } from '@/lib/user-sync';
 import { getFavoriteJobIds } from '@/app/actions';
 import { Briefcase, Sparkles, Zap, Globe, Shield } from 'lucide-react';
+import { CompanyLogos } from '@/components/company-logos';
 
 export default async function Home({
   searchParams,
@@ -59,6 +60,11 @@ export default async function Home({
             <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
               Vancer aggregates job listings from top sources and uses advanced AI to analyze tech stacks, requirements, and opportunities just for you.
             </p>
+
+            <div className="w-full pt-8 pb-4">
+              <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-6">Evaluating vacancies from</p>
+              <CompanyLogos />
+            </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <SignInButton mode="modal">
@@ -209,7 +215,7 @@ export default async function Home({
       </div>
 
       <footer className="w-full py-6 text-center text-slate-400 text-sm">
-        Powered by 2caps team
+        Powered by 2Caps Team
       </footer>
     </main>
   );
