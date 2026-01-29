@@ -5,7 +5,7 @@ import { Job } from '@/lib/theirstack';
 import { toggleFavorite } from '@/app/actions';
 import { enrichJobDescription } from '@/lib/gemini-action';
 import { useState } from 'react';
-import { Briefcase, MapPin, DollarSign, ExternalLink, Calendar, Heart, MessageSquare } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, ExternalLink, Calendar, Heart, MessageSquare, Sparkles, Database, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -122,14 +122,102 @@ export function JobCard({ job, initialIsFavorite = false }: { job: Job; initialI
                     </div>
 
                     {analysis && (
-                        <div className="mt-4 p-4 bg-blue-50 rounded-xl text-sm text-slate-700 border border-blue-100 animate-in fade-in slide-in-from-top-2">
-                            <h3 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                                AI Analysis Result
-                            </h3>
-                            <div className="whitespace-pre-line leading-relaxed">
-                                {analysis}
-                            </div>
+                        <div className="mt-5 pt-5 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
+                            {(() => {
+                                try {
+                                    // Attempt to parse JSON (handling potential markdown code blocks)
+                                    const cleanJson = analysis.replace(/^```json\s*|\s*```$/g, '');
+                                    const data = JSON.parse(cleanJson);
+
+                                    // Check if it has the expected structure
+                                    if (!data.verdict || !data.conclusion) throw new Error("Invalid format");
+
+                                    const isPositive = data.verdict === 'Apply';
+                                    const isCaution = data.verdict === 'Caution';
+
+                                    return (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                                                    <Sparkles className="w-4 h-4 text-indigo-500" />
+                                                    AI Assessment
+                                                </h3>
+                                                <span className={clsx(
+                                                    "px-3 py-1 rounded-full text-sm font-bold border",
+                                                    isPositive && "bg-green-50 text-green-700 border-green-200",
+                                                    isCaution && "bg-yellow-50 text-yellow-700 border-yellow-200",
+                                                    !isPositive && !isCaution && "bg-red-50 text-red-700 border-red-200"
+                                                )}>
+                                                    {data.verdict.toUpperCase()}
+                                                </span>
+                                            </div>
+
+                                            <div className="bg-slate-50 p-3 rounded-xl text-sm text-slate-600 italic">
+                                                "{data.conclusion}"
+                                            </div>
+
+                                            <div className="grid gap-3">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-1.5 bg-green-100 text-green-600 rounded-lg mt-0.5">
+                                                        <DollarSign className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estimated Salary</span>
+                                                        <p className="text-sm font-medium text-slate-900">{data.salary}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg mt-0.5">
+                                                        <Database className="w-4 h-4" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tech Stack</span>
+                                                        <div className="flex flex-wrap gap-1.5 mt-1">
+                                                            {data.techStack?.map((tech: string, i: number) => (
+                                                                <span key={i} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-xs text-slate-600 font-medium">
+                                                                    {tech}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {data.redFlags && data.redFlags.length > 0 && (
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-1.5 bg-red-100 text-red-600 rounded-lg mt-0.5">
+                                                            <Shield className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Potential Risks</span>
+                                                            <ul className="mt-1 space-y-1">
+                                                                {data.redFlags.map((flag: string, i: number) => (
+                                                                    <li key={i} className="text-sm text-red-600 flex items-start gap-2">
+                                                                        <span className="block w-1 h-1 bg-red-400 rounded-full mt-2" />
+                                                                        {flag}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                } catch (e) {
+                                    // Fallback for simple string or error messages
+                                    return (
+                                        <div className="p-4 bg-blue-50 rounded-xl text-sm text-slate-700 border border-blue-100">
+                                            <h3 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                                                AI Analysis Result
+                                            </h3>
+                                            <div className="whitespace-pre-line leading-relaxed">
+                                                {analysis}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                            })()}
                         </div>
                     )}
                 </div>

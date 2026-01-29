@@ -2,53 +2,57 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-export async function enrichJobDescription(description: string) {
-  if (!apiKey) {
-    return "Error: API Key missing.";
-  }
+// Singleton Queue mechanism
+// This promise chain ensures that tasks are executed strictly sequentially.
+let processingQueue: Promise<void> = Promise.resolve();
+const MIN_DELAY_MS = 6000;
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function actualEnrich(description: string) {
+  if (!apiKey) return "Error: API Key missing.";
 
   const genAI = new GoogleGenerativeAI(apiKey);
+  // Trying 'gemini-flash-latest' as it often points to the most stable free-tier compatible version
+  // compared to specific version tags that might have different quotas.
+  const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
-  // We'll try these models in order. 
-  // 1.5-flash is the most reliable for free tier quotas.
-  // 2.0-flash is faster but can have stricter '0 limit' quotas on some keys.
-  const modelsToTry = [
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-    "gemini-2.0-flash"
-  ];
-
-  const prompt = `Analyze the job description and highlight three points: 
-  1. Actual salary range (if available). 
-  2. Main technology stack. 
-  3. Red flags (suspicious requirements). 
-  Format as a clean list with icons.
-  Text: ${description}`;
-
-  for (const modelName of modelsToTry) {
-    try {
-      console.log(`Attempting analysis with: ${modelName}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-
-      if (text) return text;
-    } catch (error: any) {
-      console.warn(`Model ${modelName} failed. Status: ${error.status}`);
-
-      // If we hit a 429 (Quota exceeded) on one model, 
-      // it's worth trying the next one as they often have separate quotas.
-      // If we hit a 404, the model simply isn't available for this key.
-      if (modelName === modelsToTry[modelsToTry.length - 1]) {
-        // Last model failed, handle the error
-        if (error.status === 429) {
-          return "Quota exceeded for all available AI models. Please wait a few seconds and try again, or check your Google AI Studio billing.";
-        }
-        return `AI Analysis failed: ${error.message}`;
-      }
-      continue;
-    }
+  const prompt = `Analyze the job description and provide a structured JSON response (do NOT use Markdown formatting like \`\`\`json). 
+  The JSON must have this exact structure:
+  {
+    "salary": "Extracted salary range or 'Not specified'",
+    "techStack": ["Tool 1", "Tool 2", "Tool 3"],
+    "redFlags": ["Concern 1", "Concern 2"],
+    "conclusion": "A brief 2-sentence summary of whether this job is worth applying for and why.",
+    "verdict": "Apply" | "Caution" | "Avoid"
   }
+  
+  Job Description:
+  ${description}`;
 
-  return "AI Analysis failed to find a working model.";
+  try {
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (error: any) {
+    console.error(`Gemini Error: ${error.message}`);
+    if (error.status === 429 || error.message?.includes("Quota")) {
+      return "Quota exceeded. Please try again later.";
+    }
+    return `Analysis failed: ${error.message}`;
+  }
+}
+
+export async function enrichJobDescription(description: string): Promise<string> {
+  // Append this request to the queue to ensure strict serial execution
+  const enqueuedRequest = processingQueue.then(async () => {
+    console.log("⏳ Queue: Waiting 6s before processing next request...");
+    await delay(MIN_DELAY_MS);
+    return actualEnrich(description);
+  });
+
+  // Advance the queue without failing the chain for future requests
+  processingQueue = enqueuedRequest.then(() => { }).catch(() => { });
+
+  // Return the result for this specific call
+  return enqueuedRequest;
 }
