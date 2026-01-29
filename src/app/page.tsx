@@ -43,14 +43,14 @@ export default async function Home({
         </header>
 
         {/* Hero Section */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-b from-slate-50 to-white">
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 md:py-20 bg-gradient-to-b from-slate-50 to-white">
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-600 text-xs font-semibold uppercase tracking-wider mb-4 animate-fade-in-up">
               <Sparkles className="w-3 h-3" />
               <span>Powered by 2Caps Team</span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-4xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Find Your Next Role <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
                 With AI Precision
@@ -76,7 +76,7 @@ export default async function Home({
           </div>
 
           {/* Feature Grid */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-24 w-full">
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-12 md:mt-24 w-full">
             <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-6 text-blue-600">
                 <Globe className="w-6 h-6" />
