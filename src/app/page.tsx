@@ -24,10 +24,10 @@ export default async function Home({
   // --------------------------------------------------------------------------
   if (!user) {
     return (
-      <main className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      <main className="min-h-screen bg-slate-50 font-sans flex flex-col overflow-x-hidden w-full">
         {/* Header */}
         <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-600/20">V</div>
               <span className="text-xl font-bold text-slate-900 tracking-tight">VANCER</span>
@@ -43,7 +43,7 @@ export default async function Home({
         </header>
 
         {/* Hero Section */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-12 md:py-20 bg-gradient-to-b from-slate-50 to-white">
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 md:px-6 py-12 md:py-20 bg-gradient-to-b from-slate-50 to-white w-full overflow-hidden">
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-600 text-xs font-semibold uppercase tracking-wider mb-4 animate-fade-in-up">
               <Sparkles className="w-3 h-3" />
@@ -61,7 +61,7 @@ export default async function Home({
               Vancer aggregates job listings from top sources and uses advanced AI to analyze tech stacks, requirements, and opportunities just for you.
             </p>
 
-            <div className="w-full pt-8 pb-4">
+            <div className="w-full pt-8 pb-4 max-w-[90vw] md:max-w-full mx-auto overflow-hidden">
               <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-6">Evaluating vacancies from</p>
               <CompanyLogos />
             </div>
@@ -148,7 +148,7 @@ export default async function Home({
 
       <div className="max-w-3xl mx-auto px-4 py-12 flex-1 w-full">
         <div className="text-center mb-12">
-          <h2 className="text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
             VANCER
           </h2>
           <p className="text-slate-500 max-w-lg mx-auto">
