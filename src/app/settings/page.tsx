@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'; // Assuming Label component or st
 import Link from 'next/link';
 import { ArrowLeft, User, Save } from 'lucide-react';
 import { ProfileForm } from '@/components/profile-form';
+import { getUserDocuments } from '@/app/services/actions';
+import { ResumeManager } from '@/components/resume-manager';
 
 export default async function SettingsPage() {
     const supabase = await createClient();
@@ -23,6 +25,9 @@ export default async function SettingsPage() {
         .select('*')
         .eq('id', user.id)
         .single();
+
+    // Fetch user documents
+    const documents = await getUserDocuments();
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans p-4 md:p-8">
@@ -49,6 +54,8 @@ export default async function SettingsPage() {
 
                     <ProfileForm profile={profile} />
                 </div>
+
+                <ResumeManager documents={documents} />
             </div>
         </div>
     );

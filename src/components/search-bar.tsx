@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Filter, X, RotateCcw } from 'lucide-react';
+import { Search, Filter, X, RotateCcw, ArrowRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -12,18 +12,35 @@ import { Label } from '@/components/ui/label';
 export function SearchBar({ initialQuery }: { initialQuery: string }) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [query, setQuery] = useState(initialQuery);
+    const [placeholder, setPlaceholder] = useState('');
 
-    // Filter State
+    const [query, setQuery] = useState(initialQuery);
     const [isOpen, setIsOpen] = useState(false);
     const [days, setDays] = useState<string>(searchParams.get('days') || '30');
     const [minSalary, setMinSalary] = useState<number>(Number(searchParams.get('minSalary')) || 0);
     const [stack, setStack] = useState<string[]>(searchParams.get('stack')?.split(',').filter(Boolean) || []);
     const [stackInput, setStackInput] = useState('');
 
-    // Sync state with URL
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setPlaceholder('');
+            } else {
+                setPlaceholder('Which vacancies are you interested in monitoring?');
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // ... existing sync state ...
     useEffect(() => {
         setDays(searchParams.get('days') || '30');
+        // ... (rest of existing effect)
         setMinSalary(Number(searchParams.get('minSalary')) || 0);
         setStack(searchParams.get('stack')?.split(',').filter(Boolean) || []);
         // Also sync query if needed, although initialQuery usually handles the first load
@@ -98,8 +115,8 @@ export function SearchBar({ initialQuery }: { initialQuery: string }) {
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
                     className={`flex-shrink-0 w-14 h-14 bg-white border rounded-2xl flex items-center justify-center transition-all shadow-sm relative ${isOpen || hasActiveFilters
-                            ? 'text-blue-600 border-blue-200 bg-blue-50'
-                            : 'text-slate-400 border-slate-200 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50'
+                        ? 'text-blue-600 border-blue-200 bg-blue-50'
+                        : 'text-slate-400 border-slate-200 hover:text-blue-500 hover:border-blue-200 hover:bg-blue-50'
                         }`}
                     title="Filters"
                 >
@@ -114,15 +131,15 @@ export function SearchBar({ initialQuery }: { initialQuery: string }) {
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Which vacancies are you interested in monitoring?"
+                        placeholder={placeholder}
                         className="w-full px-12 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-slate-900 h-14"
                     />
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                     <button
                         type="submit"
-                        className="absolute right-2 top-2 bottom-2 px-4 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+                        className="absolute right-2 top-2 bottom-2 w-12 sm:w-20 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center"
                     >
-                        Monitor
+                        <ArrowRight className="w-5 h-5" />
                     </button>
                 </div>
             </form>
@@ -148,8 +165,8 @@ export function SearchBar({ initialQuery }: { initialQuery: string }) {
                                         type="button"
                                         onClick={() => setDays(option.value)}
                                         className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${days === option.value
-                                                ? 'bg-blue-600 text-white border-blue-600 font-medium'
-                                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                                            ? 'bg-blue-600 text-white border-blue-600 font-medium'
+                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                                             }`}
                                     >
                                         {option.label}

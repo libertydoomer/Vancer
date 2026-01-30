@@ -2,7 +2,7 @@
 import { getFavoriteJobs } from '@/app/actions';
 import { JobCard } from '@/components/job-card';
 import { createClient } from '@/utils/supabase/server';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { ArrowLeft, LogOut, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -29,15 +29,28 @@ export default async function FavoritesPage() {
                         <h1 className="text-lg font-bold text-slate-900">VANCER</h1>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-slate-900 hidden sm:block">
-                            {user.email?.split('@')[0]}
-                        </span>
-                        <form action="/auth/signout" method="post">
-                            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
-                                <LogOut className="w-5 h-5" />
-                            </Button>
-                        </form>
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <Link href="/services" className="hidden md:flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors">
+                            <Sparkles className="w-4 h-4" />
+                            Services
+                        </Link>
+                        <div className="flex items-center gap-1 md:gap-2">
+                            <Link href="/services" className="md:hidden">
+                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Services">
+                                    <Sparkles className="w-5 h-5" />
+                                </Button>
+                            </Link>
+                            <Link href="/settings">
+                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Settings">
+                                    <SettingsIcon className="w-5 h-5" />
+                                </Button>
+                            </Link>
+                            <form action="/auth/signout" method="post">
+                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
+                                    <LogOut className="w-5 h-5" />
+                                </Button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </header>

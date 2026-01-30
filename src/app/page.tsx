@@ -10,6 +10,7 @@ import { createClient } from '@/utils/supabase/server';
 import { AuthModal } from '@/components/auth-modal'; // Import AuthModal
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ResumeUpload } from '@/components/resume-upload';
 
 export default async function Home({
   searchParams,
@@ -126,7 +127,7 @@ export default async function Home({
   // --------------------------------------------------------------------------
   // AUTHENTICATED APP VIEW
   // --------------------------------------------------------------------------
-  const query = (await searchParams).q || 'Remote AI Architect';
+  const query = (await searchParams).q || '';
   const daysParam = (await searchParams).days;
   const days = daysParam ? parseInt(daysParam) : 30; // Default 30 days if not specified
   const minSalaryParam = (await searchParams).minSalary;
@@ -134,10 +135,8 @@ export default async function Home({
   const stackParam = (await searchParams).stack;
   const stackFilter = stackParam ? stackParam.split(',') : [];
 
-  const [theirStackData, adzunaJobs] = await Promise.all([
-    getNicheJobs(query, { days }),
-    getAdzunaJobs(query, { days })
-  ]);
+  const theirStackData = await getNicheJobs(query, { days });
+  const adzunaJobs = await getAdzunaJobs(query, { days });
 
   let jobs = [...(theirStackData.jobs || []), ...adzunaJobs];
 
@@ -192,17 +191,28 @@ export default async function Home({
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:block text-sm text-slate-500">
             Hello, <span className="font-medium text-slate-900">{user.email?.split('@')[0]}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/settings">
-              <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Settings">
-                <Settings className="w-5 h-5" />
-              </Button>
+          <div className="flex items-center gap-2 md:gap-4">
+            <Link href="/services" className="hidden md:flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors">
+              <Sparkles className="w-4 h-4" />
+              Services
             </Link>
-            <form action="/auth/signout" method="post">
-              <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </form>
+            <div className="flex items-center gap-1 md:gap-2">
+              <Link href="/services" className="md:hidden">
+                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Services">
+                  <Sparkles className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Settings">
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </Link>
+              <form action="/auth/signout" method="post">
+                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </header>
@@ -220,6 +230,8 @@ export default async function Home({
         <Suspense fallback={<div className="h-10 w-full animate-pulse bg-slate-200 rounded-2xl mb-8" />}>
           <SearchBar initialQuery={query} />
         </Suspense>
+
+
 
         <div className="flex flex-wrap items-center justify-center gap-2 mb-12 mt-6">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Suggestions:</span>
@@ -272,6 +284,8 @@ export default async function Home({
           </div>
         </div>
       </div>
+
+
 
       <footer className="w-full py-6 text-center text-slate-400 text-sm">
         <div className="mb-2">

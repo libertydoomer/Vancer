@@ -1,0 +1,463 @@
+'use client';
+
+import { useState, useCallback, useRef } from 'react';
+import { Upload, FileText, CheckCircle, X, Loader2, Sparkles, Search, Save, ChevronRight, AlertCircle, FileOutput, Library } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { analyzeResumeAction, getAnalysisHistory, saveAnalysisAction, getUserDocuments, analyzeStoredDocumentAction } from '@/app/services/actions';
+import Link from 'next/link';
+import { useEffect } from 'react';
+
+interface AnalysisResult {
+    jobTitles: string[];
+    searchQueries: string[];
+    critique: string[];
+    legend: string;
+}
+
+export function ResumeUpload() {
+    const [isDragging, setIsDragging] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [result, setResult] = useState<AnalysisResult | null>(null);
+    const [history, setHistory] = useState<any[]>([]);
+    const [documents, setDocuments] = useState<any[]>([]);
+    const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const loadData = useCallback(async () => {
+        try {
+            const hist = await getAnalysisHistory();
+            const docs = await getUserDocuments();
+            setHistory(hist);
+            setDocuments(docs);
+        } catch (e) {
+            console.error(e);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    }, []);
+
+    const validateFile = (file: File) => {
+        const validTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (!validTypes.includes(file.type)) {
+            toast.error('Invalid file type. Please upload a PDF or Word document.');
+            return false;
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            toast.error('File is too large. Maximum size is 5MB.');
+            return false;
+        }
+        return true;
+    };
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const droppedFile = e.dataTransfer.files[0];
+            if (validateFile(droppedFile)) {
+                setFile(droppedFile);
+                setResult(null); // Reset result on new file
+                toast.success(`File "${droppedFile.name}" selected!`);
+            }
+        }
+    }, []);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const selectedFile = e.target.files[0];
+            if (validateFile(selectedFile)) {
+                setFile(selectedFile);
+                setResult(null); // Reset result on new file
+                toast.success(`File "${selectedFile.name}" selected!`);
+            }
+        }
+    };
+
+    const removeFile = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setFile(null);
+        setSelectedDoc(null);
+        setResult(null);
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+    };
+
+    const handleAnalyze = async () => {
+        if (!file && !selectedDoc) return;
+
+        setIsAnalyzing(true);
+
+        try {
+            let data;
+            if (selectedDoc) {
+                // Analyze stored document
+                data = await analyzeStoredDocumentAction(selectedDoc.id);
+            } else if (file) {
+                // Analyze uploaded file (Legacy/Direct mode)
+                const formData = new FormData();
+                formData.append('file', file);
+                data = await analyzeResumeAction(formData);
+            }
+
+            setResult(data);
+            // await loadData();
+            toast.success("Resume analysis complete!");
+        } catch (error) {
+            toast.error("Failed to analyze resume. Please try again.");
+            console.error(error);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!result) return;
+        const fileName = file?.name || selectedDoc?.fileName;
+        if (!fileName) return;
+
+        try {
+            await saveAnalysisAction(result, fileName);
+            await loadData();
+            toast.success("Report saved successfully!");
+        } catch (error) {
+            toast.error("Failed to save report.");
+        }
+    };
+
+    return (
+        <div className="w-full space-y-8">
+            {/* Library Section */}
+            {documents.length > 0 && !result && (
+                <div className="mb-2">
+                    <h3 className="text-sm font-semibold text-slate-500 mb-3 flex items-center">
+                        <Library className="w-4 h-4 mr-2" />
+                        Select from your resumes or upload new
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {documents.map(doc => (
+                            <div
+                                key={doc.id}
+                                onClick={() => {
+                                    setSelectedDoc(doc);
+                                    setFile(null);
+                                    if (inputRef.current) inputRef.current.value = '';
+                                }}
+                                className={`
+                                    p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3
+                                    ${selectedDoc?.id === doc.id
+                                        ? 'border-green-500 bg-green-50 ring-1 ring-green-500 shadow-sm'
+                                        : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                                    }
+                                `}
+                            >
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${selectedDoc?.id === doc.id ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                                    <FileText className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className={`text-xs font-semibold truncate ${selectedDoc?.id === doc.id ? 'text-green-900' : 'text-slate-900'}`}>
+                                        {doc.fileName}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400">
+                                        {new Date(doc.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Upload Area */}
+            {!selectedDoc && (
+                <div
+                    className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-200 ease-in-out cursor-pointer group
+          ${isDragging
+                            ? 'border-blue-500 bg-blue-50 scale-[1.01] shadow-lg'
+                            : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50'
+                        }
+          ${file ? 'border-solid border-emerald-500 bg-emerald-50/10' : ''}
+        `}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => inputRef.current?.click()}
+                >
+                    <input
+                        type="file"
+                        ref={inputRef}
+                        className="hidden"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleFileChange}
+                    />
+
+                    <div className="flex flex-col items-center justify-center text-center space-y-3">
+                        {file ? (
+                            <>
+                                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
+                                    <FileText className="w-8 h-8 text-emerald-600" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-lg font-semibold text-slate-900 line-clamp-1 break-all max-w-[300px]">
+                                        {file.name}
+                                    </p>
+                                    <p className="text-sm text-slate-500">
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 mt-4 z-20">
+                                    <span className="flex items-center text-sm font-medium text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">
+                                        <CheckCircle className="w-4 h-4 mr-1.5" />
+                                        Ready
+                                    </span>
+                                    <button
+                                        onClick={removeFile}
+                                        className="p-1 hover:bg-red-100 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                                        title="Remove file"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-2 transition-colors
+                ${isDragging ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500'}
+              `}>
+                                    <Upload className="w-7 h-7" />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-semibold text-slate-900">
+                                        Upload a new resume
+                                    </p>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        Drag & drop or click to browse (PDF, DOCX)
+                                    </p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {selectedDoc && !result && (
+                <div className="relative border-2 border-solid border-emerald-500 bg-emerald-50/10 rounded-2xl p-8 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
+                            <FileText className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-lg font-semibold text-slate-900 line-clamp-1 break-all max-w-[300px]">
+                                {selectedDoc.fileName}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                                {selectedDoc.size ? (selectedDoc.size / 1024 / 1024).toFixed(2) + ' MB' : 'Stored Document'}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-4 z-20">
+                            <span className="flex items-center text-sm font-medium text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full">
+                                <CheckCircle className="w-4 h-4 mr-1.5" />
+                                Ready to Analyze
+                            </span>
+                            <button
+                                onClick={() => setSelectedDoc(null)}
+                                className="p-1 hover:bg-red-100 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                                title="Deselect"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Analyze Button */}
+            {(file || selectedDoc) && !result && (
+                <div className="flex justify-center">
+                    <Button
+                        size="lg"
+                        onClick={handleAnalyze}
+                        disabled={isAnalyzing}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-8 rounded-2xl shadow-xl shadow-blue-600/20 active:scale-95 transition-all text-lg"
+                    >
+                        {isAnalyzing ? (
+                            <>
+                                <Loader2 className="w-6 h-6 mr-2 animate-spin" />
+                                Analyzing Resume...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="w-6 h-6 mr-2 text-yellow-300 fill-current" />
+                                Analyze Resume with AI
+                            </>
+                        )}
+                    </Button>
+                </div>
+            )}
+
+            {/* Analysis Results */}
+            {result && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        {/* Left Column: Insights */}
+                        <div className="space-y-6">
+                            {/* Job Matches */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+                                    <CheckCircle className="w-5 h-5 mr-2 text-emerald-500" />
+                                    Best Fit Roles
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {result.jobTitles.map((title, i) => (
+                                        <Link href={`/?q=${encodeURIComponent(title)}`} key={i}>
+                                            <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium border border-emerald-100 hover:bg-emerald-100 hover:border-emerald-200 transition-colors cursor-pointer flex items-center">
+                                                {title}
+                                                <ChevronRight className="w-3 h-3 ml-1 opacity-50" />
+                                            </span>
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Search Queries */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+                                    <Search className="w-5 h-5 mr-2 text-blue-500" />
+                                    Recommended Search Terms
+                                </h3>
+                                <div className="space-y-2">
+                                    {result.searchQueries.map((q, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700">
+                                            {q}
+                                            <Link href={`/?q=${encodeURIComponent(q)}`}>
+                                                <Button size="sm" variant="ghost" className="h-7 text-blue-600 hover:text-blue-700">
+                                                    Apply
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Critique */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+                                    <AlertCircle className="w-5 h-5 mr-2 text-amber-500" />
+                                    Ways to Improve
+                                </h3>
+                                <ul className="space-y-3">
+                                    {result.critique.map((point, i) => (
+                                        <li key={i} className="flex items-start text-sm text-slate-600">
+                                            <span className="mr-2 mt-1 w-1.5 h-1.5 bg-amber-400 rounded-full flex-shrink-0" />
+                                            {point}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Legend */}
+                        <div className="flex flex-col h-full">
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1 h-full min-h-[500px]">
+                                <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                                    <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                                        <Sparkles className="w-5 h-5 mr-2 text-indigo-500" />
+                                        Your Career Legend
+                                    </h3>
+
+                                </div>
+                                <div className="flex-1 p-0 relative">
+                                    <textarea
+                                        className="w-full h-full p-6 resize-none focus:outline-none text-sm leading-relaxed font-mono text-slate-700 bg-white"
+                                        value={result.legend}
+                                        readOnly
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-center text-xs text-slate-400 mt-4">
+                                Note: Memorize this narrative to answer "Tell me about yourself" with confidence.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Save Actions Bar */}
+            {result && (
+                <div className="flex justify-center pt-8 border-t border-slate-100">
+                    <Button
+                        size="lg"
+                        onClick={handleSave}
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 font-bold py-6 px-12 rounded-2xl shadow-xl shadow-emerald-600/20 active:scale-95 transition-all text-lg"
+                    >
+                        <Save className="w-6 h-6 mr-3" />
+                        Save Report
+                    </Button>
+                </div>
+            )}
+
+            {/* History Section */}
+            {history.length > 0 && (
+                <div className="border-t border-slate-200 pt-8 mt-12">
+                    <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center">
+                        <FileText className="w-5 h-5 mr-2 text-slate-500" />
+                        Saved Reports
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {history.map((item) => (
+                            <div
+                                key={item.id}
+                                onClick={() => {
+                                    setFile({ name: item.fileName, size: 0 } as File); // Mock file for display
+                                    setResult({
+                                        jobTitles: item.jobTitles,
+                                        searchQueries: item.searchQueries,
+                                        critique: item.critique,
+                                        legend: item.legend
+                                    });
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                className="bg-white p-4 rounded-xl border border-slate-200 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all group"
+                            >
+                                <div className="flex items-start justify-between mb-2">
+                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                                        <Sparkles className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs text-slate-400">
+                                        {new Date(item.createdAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <h4 className="font-semibold text-slate-900 line-clamp-1 mb-1 truncate" title={item.fileName}>
+                                    {item.fileName}
+                                </h4>
+                                <p className="text-xs text-slate-500 line-clamp-2">
+                                    Matched: {item.jobTitles?.[0]}, {item.jobTitles?.[1]}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
