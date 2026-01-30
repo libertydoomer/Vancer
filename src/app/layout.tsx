@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "JobAggregator",
-  description: "AI-Powered Job Monitoring",
+  title: "Vancer AI-Job",
+  description: "AI-Powered Job Monitoring and Aggregation",
 };
 
 export const viewport = {

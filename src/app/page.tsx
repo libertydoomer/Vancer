@@ -45,10 +45,7 @@ export default async function Home({
         {/* Hero Section */}
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4 md:px-6 py-12 md:py-20 bg-gradient-to-b from-slate-50 to-white w-full overflow-hidden">
           <div className="max-w-4xl mx-auto space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-100 rounded-full text-blue-600 text-xs font-semibold uppercase tracking-wider mb-4 animate-fade-in-up">
-              <Sparkles className="w-3 h-3" />
-              <span>Powered by 2Caps Team</span>
-            </div>
+
 
             <h1 className="text-4xl md:text-7xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Find Your Next Role <br />
@@ -77,7 +74,7 @@ export default async function Home({
 
           {/* Feature Grid */}
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mt-12 md:mt-24 w-full">
-            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-6 text-blue-600">
                 <Globe className="w-6 h-6" />
               </div>
@@ -87,7 +84,7 @@ export default async function Home({
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mb-6 text-indigo-600">
                 <Sparkles className="w-6 h-6" />
               </div>
@@ -97,7 +94,7 @@ export default async function Home({
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-6 text-emerald-600">
                 <Shield className="w-6 h-6" />
               </div>
@@ -110,6 +107,16 @@ export default async function Home({
         </div>
 
         <footer className="w-full py-8 text-center text-slate-400 text-sm border-t border-slate-100 bg-white">
+          <div className="mb-2">
+            <a
+              href="https://t.me/libertydoomer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+            >
+              Want to build a similar project? Contact the 2Caps team
+            </a>
+          </div>
           &copy; {new Date().getFullYear()} Vancer. Powered by 2Caps Team.
         </footer>
       </main>
@@ -267,6 +274,16 @@ export default async function Home({
       </div>
 
       <footer className="w-full py-6 text-center text-slate-400 text-sm">
+        <div className="mb-2">
+          <a
+            href="https://t.me/libertydoomer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors"
+          >
+            Want to build a similar project? Contact the 2Caps Team
+          </a>
+        </div>
         Powered by 2Caps Team
       </footer>
     </main>

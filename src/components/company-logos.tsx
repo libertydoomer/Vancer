@@ -7,7 +7,7 @@ export const CompanyLogos = () => {
         { name: 'Adzuna', icon: Globe, color: 'text-green-600' },
         { name: 'TheirStack', icon: Database, color: 'text-purple-600' },
         { name: 'Glassdoor', icon: Briefcase, color: 'text-green-500' },
-        { name: 'Wellfound', icon: SparklesIcon, color: 'text-slate-800' },
+        { name: 'Wellfound', icon: SparklesIcon, color: 'text-purple-600' },
         { name: 'Monster', icon: MonsterIcon, color: 'text-indigo-600' },
     ];
 
