@@ -11,10 +11,12 @@ export interface Job {
     postedAt: string;
 }
 
-export async function getNicheJobs(query: string): Promise<{ jobs: Job[] }> {
+export async function getNicheJobs(query: string, options?: { days?: number }): Promise<{ jobs: Job[] }> {
     const apiKey = process.env.THEIRSTACK_API_KEY;
     if (!apiKey) {
         console.warn("THEIRSTACK_API_KEY is missing. Returning mock data.");
+        // Return mock data but respect the days filter conceptually if we were generating dynamic dates, 
+        // but for static mock data we'll just return it.
         return {
             jobs: [
                 {
@@ -26,7 +28,7 @@ export async function getNicheJobs(query: string): Promise<{ jobs: Job[] }> {
                     url: '#',
                     location: 'Remote',
                     tags: ['No Experience', 'Full-time'],
-                    postedAt: '2 days ago'
+                    postedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() // 2 days ago
                 }
             ]
         };
@@ -42,7 +44,7 @@ export async function getNicheJobs(query: string): Promise<{ jobs: Job[] }> {
             },
             body: JSON.stringify({
                 job_title_or: [query],
-                posted_at_max_age_days: 30,
+                posted_at_max_age_days: options?.days || 30,
                 limit: 10
             }),
             next: { revalidate: 3600 }

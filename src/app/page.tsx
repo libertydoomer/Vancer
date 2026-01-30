@@ -3,21 +3,21 @@ import { getAdzunaJobs } from '@/lib/adzuna';
 import { JobCard } from '@/components/job-card';
 import { SearchBar } from '@/components/search-bar';
 import { Suspense } from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
-import { syncUser } from '@/lib/user-sync';
 import { getFavoriteJobIds } from '@/app/actions';
-import { Briefcase, Sparkles, Zap, Globe, Shield } from 'lucide-react';
+import { Briefcase, Sparkles, Zap, Globe, Shield, LogOut, Settings } from 'lucide-react';
 import { CompanyLogos } from '@/components/company-logos';
+import { createClient } from '@/utils/supabase/server';
+import { AuthModal } from '@/components/auth-modal'; // Import AuthModal
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; days?: string; minSalary?: string; stack?: string }>;
 }) {
-  // Sync the user to the database if they are logged in
-  await syncUser();
-  const user = await currentUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   // --------------------------------------------------------------------------
   // LANDING PAGE (Unauthenticated State)
@@ -33,11 +33,11 @@ export default async function Home({
               <span className="text-xl font-bold text-slate-900 tracking-tight">VANCER</span>
             </div>
             <div className="flex items-center gap-4">
-              <SignInButton mode="modal">
+              <AuthModal>
                 <button className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95">
                   Sign In
                 </button>
-              </SignInButton>
+              </AuthModal>
             </div>
           </div>
         </header>
@@ -67,11 +67,11 @@ export default async function Home({
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <SignInButton mode="modal">
+              <AuthModal defaultMode="signup">
                 <button className="px-8 py-4 bg-slate-900 text-white text-lg font-bold rounded-xl hover:bg-slate-800 transition-all shadow-xl hover:shadow-2xl shadow-slate-900/20 w-full sm:w-auto flex items-center justify-center gap-2">
                   Get Started <Zap className="w-5 h-5 text-yellow-400" />
                 </button>
-              </SignInButton>
+              </AuthModal>
             </div>
           </div>
 
@@ -120,13 +120,58 @@ export default async function Home({
   // AUTHENTICATED APP VIEW
   // --------------------------------------------------------------------------
   const query = (await searchParams).q || 'Remote AI Architect';
+  const daysParam = (await searchParams).days;
+  const days = daysParam ? parseInt(daysParam) : 30; // Default 30 days if not specified
+  const minSalaryParam = (await searchParams).minSalary;
+  const minSalary = minSalaryParam ? parseInt(minSalaryParam) : 0;
+  const stackParam = (await searchParams).stack;
+  const stackFilter = stackParam ? stackParam.split(',') : [];
 
   const [theirStackData, adzunaJobs] = await Promise.all([
-    getNicheJobs(query),
-    getAdzunaJobs(query)
+    getNicheJobs(query, { days }),
+    getAdzunaJobs(query, { days })
   ]);
 
-  const jobs = [...(theirStackData.jobs || []), ...adzunaJobs];
+  let jobs = [...(theirStackData.jobs || []), ...adzunaJobs];
+
+  // Client-side filtering (run on server before render)
+  if (minSalary > 0 || stackFilter.length > 0) {
+    jobs = jobs.filter(job => {
+      // Salary Filter
+      if (minSalary > 0) {
+        if (!job.salary || job.salary === 'Salary hidden') return false;
+        // Parse salary string: "$140k - $180k" or "$140,000"
+        const numbers = job.salary.match(/\d+([.,]\d+)?/g);
+        if (!numbers) return false;
+
+        // Handle "k" suffix logic if needed, but usually normalized.
+        // Assuming simple extraction for now.
+        // If "150k", multiply by 1000.
+        const rawString = job.salary.toLowerCase();
+        let salaryValue = 0;
+
+        // Simple heuristic: find the first number. If followed by 'k', multiply.
+        const firstMatch = rawString.match(/(\d+)(?:,(\d+))?(k)?/);
+        if (firstMatch) {
+          let val = parseInt(firstMatch[1] + (firstMatch[2] || ''));
+          if (firstMatch[3] === 'k') val *= 1000;
+          salaryValue = val;
+        }
+
+        if (salaryValue < minSalary) return false;
+      }
+
+      // Stack Filter
+      if (stackFilter.length > 0) {
+        const content = (job.description + ' ' + (job.tags?.join(' ') || '') + ' ' + job.title).toLowerCase();
+        const matchesRequest = stackFilter.every(s => content.includes(s.toLowerCase()));
+        if (!matchesRequest) return false;
+      }
+
+      return true;
+    });
+  }
+
   const favoriteJobIds = await getFavoriteJobIds();
 
   return (
@@ -138,10 +183,19 @@ export default async function Home({
             <h1 className="text-lg font-bold text-slate-900">VANCER</h1>
           </div>
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:block text-sm text-slate-500">
-            Hello, <span className="font-medium text-slate-900">{user.firstName}</span>
+            Hello, <span className="font-medium text-slate-900">{user.email?.split('@')[0]}</span>
           </div>
           <div className="flex items-center gap-4">
-            <UserButton afterSignOutUrl="/" />
+            <Link href="/settings">
+              <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Settings">
+                <Settings className="w-5 h-5" />
+              </Button>
+            </Link>
+            <form action="/auth/signout" method="post">
+              <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </form>
           </div>
         </div>
       </header>
@@ -160,7 +214,7 @@ export default async function Home({
           <SearchBar initialQuery={query} />
         </Suspense>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-12 mt-6">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Suggestions:</span>
           {[
             'AI Architect',
@@ -190,9 +244,7 @@ export default async function Home({
               )}
             </h3>
             <div className="flex gap-2">
-              <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-medium text-slate-600">
-                Last 30 Days
-              </span>
+              {/* Display active logic or status if needed */}
             </div>
           </div>
 
@@ -207,7 +259,7 @@ export default async function Home({
               ))
             ) : (
               <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center">
-                <p className="text-slate-500">No jobs found for "{query}". Try another search!</p>
+                <p className="text-slate-500">No jobs found for "{query}" with current filters. Try adjusting them!</p>
               </div>
             )}
           </div>

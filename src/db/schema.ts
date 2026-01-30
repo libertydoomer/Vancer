@@ -1,11 +1,11 @@
 
-import { pgTable, text, serial, timestamp, varchar, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, serial, timestamp, varchar, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-export const users = pgTable('users', {
-    id: serial('id').primaryKey(),
-    clerkId: varchar('clerk_id').unique().notNull(),
-    email: varchar('email').notNull(),
+// Renamed from 'users' to 'profiles' to match Supabase conventions
+export const profiles = pgTable('profiles', {
+    id: uuid('id').primaryKey().notNull(), // Links to auth.users.id
+    email: varchar('email'), // Optional, usually managed by Auth but good for relations
     firstName: varchar('first_name'),
     lastName: varchar('last_name'),
     imageUrl: text('image_url'),
@@ -14,10 +14,10 @@ export const users = pgTable('users', {
 
 export const favoriteJobs = pgTable('favorite_jobs', {
     id: serial('id').primaryKey(),
-    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    userId: uuid('user_id').references(() => profiles.id, { onDelete: 'cascade' }).notNull(),
 
     // Job Data
-    externalId: varchar('external_id').notNull(), // Not unique globally, but unique per user theoretically (though we handle duplicates via logic or composite key if needed. For now simple.)
+    externalId: varchar('external_id').notNull(),
     title: text('title').notNull(),
     company: varchar('company').notNull(),
     description: text('description'),
@@ -31,13 +31,13 @@ export const favoriteJobs = pgTable('favorite_jobs', {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const profilesRelations = relations(profiles, ({ many }) => ({
     favoriteJobs: many(favoriteJobs),
 }));
 
 export const favoriteJobsRelations = relations(favoriteJobs, ({ one }) => ({
-    user: one(users, {
+    user: one(profiles, {
         fields: [favoriteJobs.userId],
-        references: [users.id],
+        references: [profiles.id],
     }),
 }));

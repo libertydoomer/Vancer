@@ -18,7 +18,7 @@ interface AdzunaJob {
     contract_type?: string;
 }
 
-export async function getAdzunaJobs(query: string): Promise<Job[]> {
+export async function getAdzunaJobs(query: string, options?: { days?: number }): Promise<Job[]> {
     const appId = process.env.ADZUNA_APP_ID;
     const appKey = process.env.ADZUNA_APP_KEY;
 
@@ -29,8 +29,9 @@ export async function getAdzunaJobs(query: string): Promise<Job[]> {
 
     try {
         // Fetching page 1, US jobs by default
+        const daysFilter = options?.days ? `&max_days_old=${options.days}` : '';
         const response = await fetch(
-            `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&content-type=application/json`,
+            `https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=${appId}&app_key=${appKey}&what=${encodeURIComponent(query)}&content-type=application/json${daysFilter}`,
             { next: { revalidate: 3600 } }
         );
 

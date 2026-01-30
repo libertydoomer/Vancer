@@ -1,11 +1,20 @@
 
 import { getFavoriteJobs } from '@/app/actions';
 import { JobCard } from '@/components/job-card';
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { ArrowLeft } from 'lucide-react';
+import { createClient } from '@/utils/supabase/server';
+import { ArrowLeft, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 export default async function FavoritesPage() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect('/');
+    }
+
     const jobs = await getFavoriteJobs();
 
     return (
@@ -16,21 +25,19 @@ export default async function FavoritesPage() {
                         <Link href="/" className="flex items-center justify-center p-2 rounded-lg hover:bg-slate-100 transition-colors mr-2 text-slate-500">
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">J</div>
-                        <h1 className="text-lg font-bold text-slate-900">JobFavorites</h1>
+                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">V</div>
+                        <h1 className="text-lg font-bold text-slate-900">VANCER</h1>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <SignedOut>
-                            <SignInButton mode="modal">
-                                <button className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-                                    Sign In
-                                </button>
-                            </SignInButton>
-                        </SignedOut>
-                        <SignedIn>
-                            <UserButton afterSignOutUrl="/" />
-                        </SignedIn>
+                        <span className="text-sm font-medium text-slate-900 hidden sm:block">
+                            {user.email?.split('@')[0]}
+                        </span>
+                        <form action="/auth/signout" method="post">
+                            <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
+                                <LogOut className="w-5 h-5" />
+                            </Button>
+                        </form>
                     </div>
                 </div>
             </header>
