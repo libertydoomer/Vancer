@@ -1,9 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { ResumeUpload } from '@/components/resume-upload';
-import { Sparkles, Settings, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
+import { Header } from '@/components/header';
 
 export default async function ServicesPage() {
     const supabase = await createClient();
@@ -15,40 +14,7 @@ export default async function ServicesPage() {
 
     return (
         <main className="min-h-screen bg-slate-50 font-sans">
-            <header className="w-full bg-white border-b border-slate-200 sticky top-0 z-50">
-                <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between relative">
-                    <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">V</div>
-                        <h1 className="text-lg font-bold text-slate-900">VANCER</h1>
-                    </Link>
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:block text-sm text-slate-500">
-                        Hello, <span className="font-medium text-slate-900">{user.email?.split('@')[0]}</span>
-                    </div>
-                    <div className="flex items-center gap-2 md:gap-4">
-                        <div className="hidden md:flex items-center gap-1.5 text-sm font-medium text-slate-900 bg-slate-100 px-3 py-1 rounded-full">
-                            <Sparkles className="w-4 h-4 text-blue-600" />
-                            Services
-                        </div>
-                        <div className="flex items-center gap-1 md:gap-2">
-                            <div className="md:hidden">
-                                <Button variant="ghost" size="icon" className="text-blue-600 bg-blue-50" title="Services">
-                                    <Sparkles className="w-5 h-5" />
-                                </Button>
-                            </div>
-                            <Link href="/settings">
-                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600" title="Settings">
-                                    <Settings className="w-5 h-5" />
-                                </Button>
-                            </Link>
-                            <form action="/auth/signout" method="post">
-                                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-red-500" title="Sign Out">
-                                    <LogOut className="w-5 h-5" />
-                                </Button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <Header user={user} activePage="services" showBackButton />
 
             <div className="max-w-4xl mx-auto px-4 py-12">
 

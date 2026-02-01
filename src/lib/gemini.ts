@@ -5,7 +5,7 @@ const apiKey = process.env.GEMINI_API_KEY;
 // Singleton Queue mechanism
 // This promise chain ensures that tasks are executed strictly sequentially.
 let processingQueue: Promise<void> = Promise.resolve();
-const MIN_DELAY_MS = 10000; // 10 seconds between requests (6 RPM safety)
+const MIN_DELAY_MS = 5000; // 5 seconds between requests (12 RPM safety)
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -78,7 +78,7 @@ async function actualEnrich(description: string) {
 
 export async function enrichJobDescription(description: string): Promise<string> {
   const enqueuedRequest = processingQueue.then(async () => {
-    console.log("⏳ Queue: Waiting 10s for API cooldown (Job Analysis)...");
+    console.log("⏳ Queue: Waiting 5s for API cooldown (Job Analysis)...");
     await delay(MIN_DELAY_MS);
     return actualEnrich(description);
   });
@@ -101,8 +101,8 @@ async function actualAnalyzeResume(text: string): Promise<string> {
   {
     "jobTitles": ["Title 1", "Title 2"],
     "searchQueries": ["Query 1", "Query 2"],
-    "critique": ["Point 1", "Point 2"],
-    "legend": "A narrative summary essay."
+    "critique": ["Specific, actionable tip 1 (approx. 12-15 words)", "Specific, actionable tip 2 (approx. 12-15 words)"],
+    "legend": "A massive, extremely detailed first-person narrative (approx. 500-600 words) that deeply summarizes the candidate's entire career. It should be exhaustive, covering every major skill, project, and achievement in a flowing, professional storytelling format."
   }
 
   Resume Text:
@@ -131,7 +131,7 @@ async function actualAnalyzeResume(text: string): Promise<string> {
 
 export async function analyzeResumeContent(text: string): Promise<string> {
   const enqueuedRequest = processingQueue.then(async () => {
-    console.log("⏳ Queue: Waiting 10s for API cooldown (Resume Analysis)...");
+    console.log("⏳ Queue: Waiting 5s for API cooldown (Resume Analysis)...");
     await delay(MIN_DELAY_MS);
     return actualAnalyzeResume(text);
   });

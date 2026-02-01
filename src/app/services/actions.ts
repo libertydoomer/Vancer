@@ -74,9 +74,9 @@ export async function analyzeResumeAction(formData: FormData) {
 
         const analysisJson = await analyzeResumeContent(safeText);
 
-        // Hard delay to stay within 15 RPM limit
-        console.log("Waiting 10s for API cooldown...");
-        await delay(10000);
+        // Hard delay to stay within 12 RPM limit
+        console.log("Waiting 5s for API cooldown...");
+        await delay(5000);
 
         const cleanJson = analysisJson.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -121,6 +121,36 @@ export async function getAnalysisHistory() {
     } catch (e) {
         console.error("Failed to fetch history:", e);
         return [];
+    }
+}
+
+export async function deleteAnalysisAction(id: number) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Delete from DB
+    await db.delete(resumeAnalyses).where(eq(resumeAnalyses.id, id));
+}
+
+export async function getAnalysisById(id: number) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    try {
+        const analysis = await db.query.resumeAnalyses.findFirst({
+            where: eq(resumeAnalyses.id, id),
+        });
+
+        if (!analysis || analysis.userId !== user.id) {
+            throw new Error("Report not found");
+        }
+
+        return analysis;
+    } catch (e) {
+        console.error("Failed to fetch analysis:", e);
+        throw e;
     }
 }
 
@@ -246,9 +276,9 @@ export async function analyzeStoredDocumentAction(documentId: string) {
 
         const analysisJson = await analyzeResumeContent(safeText);
 
-        // Hard delay to stay within 15 RPM limit
-        console.log("Waiting 10s for API cooldown...");
-        await delay(10000);
+        // Hard delay to stay within 12 RPM limit
+        console.log("Waiting 5s for API cooldown...");
+        await delay(5000);
         const cleanJson = analysisJson.replace(/```json/g, '').replace(/```/g, '').trim();
         const result = JSON.parse(cleanJson);
 

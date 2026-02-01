@@ -5,11 +5,11 @@ import { updateProfile } from './actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input'; // Assuming you have an Input component, otherwise use standard input
 import { Label } from '@/components/ui/label'; // Assuming Label component or standard label
-import Link from 'next/link';
-import { ArrowLeft, User, Save } from 'lucide-react';
+import { User, Save } from 'lucide-react';
 import { ProfileForm } from '@/components/profile-form';
 import { getUserDocuments } from '@/app/services/actions';
 import { ResumeManager } from '@/components/resume-manager';
+import { Header } from '@/components/header';
 
 export default async function SettingsPage() {
     const supabase = await createClient();
@@ -30,14 +30,11 @@ export default async function SettingsPage() {
     const documents = await getUserDocuments();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans p-4 md:p-8">
-            <div className="max-w-2xl mx-auto">
-                <Link href="/" className="inline-flex items-center text-slate-500 hover:text-slate-900 mb-8 transition-colors">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Jobs
-                </Link>
+        <div className="min-h-screen bg-slate-50 font-sans pb-20">
+            <Header user={user} activePage="settings" showBackButton />
 
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
+            <div className="max-w-2xl mx-auto px-4 pt-12">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 mb-8">
                     <div className="flex items-center gap-4 mb-8">
                         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                             {profile?.image_url ? (
