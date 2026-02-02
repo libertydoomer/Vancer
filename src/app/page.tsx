@@ -9,6 +9,7 @@ import { CompanyLogos } from '@/components/company-logos';
 import { createClient } from '@/utils/supabase/server';
 import { AuthModal } from '@/components/auth-modal'; // Import AuthModal
 import { Button } from '@/components/ui/button';
+import { DemoCredentialsPanel } from '@/components/demo-credentials-panel';
 import Link from 'next/link';
 import { ResumeUpload } from '@/components/resume-upload';
 
@@ -44,6 +45,8 @@ export default async function Home({
             </div>
           </div>
         </header>
+
+        <DemoCredentialsPanel />
 
         {/* Hero Section */}
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4 md:px-6 py-12 md:py-20 bg-gradient-to-b from-slate-50 to-white w-full overflow-hidden">
