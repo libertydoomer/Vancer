@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { FileText, Trash2, Upload, Plus, Loader2 } from 'lucide-react';
+import { FileText, Trash2, Upload, Plus, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { uploadDocumentAction, deleteDocumentAction } from '@/app/services/actions';
+import { uploadDocumentAction, deleteDocumentAction, getDocumentDownloadUrlAction } from '@/app/services/actions';
 import { useRouter } from 'next/navigation';
 
 interface Document {
@@ -22,6 +22,7 @@ interface ResumeManagerProps {
 export function ResumeManager({ documents }: ResumeManagerProps) {
     const [isUploading, setIsUploading] = useState(false);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [isDownloading, setIsDownloading] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
@@ -30,10 +31,10 @@ export function ResumeManager({ documents }: ResumeManagerProps) {
             const file = e.target.files[0];
 
             // Validation
-            const validTypes = ['.pdf', '.doc', '.docx'];
+            const validTypes = ['.pdf', '.docx'];
             const fileExt = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
             if (!validTypes.includes(fileExt)) {
-                toast.error("Invalid file type. Only PDF and Word documents are allowed.");
+                toast.error("Invalid file type. Only PDF and DOCX documents are allowed.");
                 return;
             }
             if (file.size > 5 * 1024 * 1024) {
@@ -55,6 +56,19 @@ export function ResumeManager({ documents }: ResumeManagerProps) {
                 setIsUploading(false);
                 if (inputRef.current) inputRef.current.value = '';
             }
+        }
+    };
+
+    const handleDownload = async (doc: Document) => {
+        setIsDownloading(doc.id);
+        try {
+            const url = await getDocumentDownloadUrlAction(doc.id);
+            // Open in new tab
+            window.open(url, '_blank');
+        } catch (error: any) {
+            toast.error("Failed to download resume.");
+        } finally {
+            setIsDownloading(null);
         }
     };
 
@@ -92,7 +106,7 @@ export function ResumeManager({ documents }: ResumeManagerProps) {
                     type="file"
                     ref={inputRef}
                     className="hidden"
-                    accept=".pdf,.doc,.docx"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     onChange={handleFileChange}
                 />
             </div>
@@ -117,15 +131,26 @@ export function ResumeManager({ documents }: ResumeManagerProps) {
                                     </p>
                                 </div>
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(doc)}
-                                disabled={isDeleting === doc.id}
-                                className="text-slate-400 hover:text-red-500 hover:bg-red-50"
-                            >
-                                {isDeleting === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDownload(doc)}
+                                    disabled={isDownloading === doc.id}
+                                    className="text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                                >
+                                    {isDownloading === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDelete(doc)}
+                                    disabled={isDeleting === doc.id}
+                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                                >
+                                    {isDeleting === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                </Button>
+                            </div>
                         </div>
                     ))}
                 </div>

@@ -55,7 +55,6 @@ export function ResumeUpload() {
     const validateFile = (file: File) => {
         const validTypes = [
             'application/pdf',
-            'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         ];
         if (!validTypes.includes(file.type)) {
@@ -241,7 +240,7 @@ export function ResumeUpload() {
                         type="file"
                         ref={inputRef}
                         className="hidden"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                         onChange={handleFileChange}
                     />
 

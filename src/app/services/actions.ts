@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/server';
 import { eq, desc } from 'drizzle-orm';
 
 const PDFParser = require("pdf2json");
-const officeParser = require('officeparser');
+
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -25,6 +25,10 @@ export async function analyzeResumeAction(formData: FormData) {
 
     if (!file) {
         throw new Error('No file uploaded');
+    }
+
+    if (file.name.toLowerCase().endsWith('.doc')) {
+        throw new Error("Формат .doc не поддерживается. Пожалуйста, сохраните файл как .docx или .pdf.");
     }
 
     let text = '';
@@ -48,20 +52,7 @@ export async function analyzeResumeAction(formData: FormData) {
             const result = await mammoth.extractRawText({ buffer });
             text = result.value;
         } else if (file.type === 'application/msword') {
-            // Handle legacy .doc files via officeparser
-            text = await new Promise((resolve, reject) => {
-                officeParser.parseOffice(buffer, (data: any, err: any) => {
-                    if (err) return reject(err);
-
-                    if (typeof data === 'string') {
-                        resolve(data);
-                    } else if (data && typeof data.toText === 'function') {
-                        resolve(data.toText());
-                    } else {
-                        resolve(String(JSON.stringify(data)));
-                    }
-                });
-            });
+            throw new Error("Формат .doc не поддерживается. Пожалуйста, сохраните файл как .docx или .pdf.");
         } else {
             throw new Error(`Unsupported file type: ${file.type}`);
         }
@@ -164,29 +155,38 @@ export async function uploadDocumentAction(formData: FormData) {
     const file = formData.get('file') as File;
     if (!file) throw new Error("No file found");
 
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `${user.id}/${timestamp}-${safeName}`;
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (file.name.toLowerCase().endsWith('.doc')) {
+        throw new Error("Формат .doc не поддерживается. Используйте .docx или .pdf");
+    }
 
-    // Upload to Storage
-    const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(storagePath, buffer, {
-            contentType: file.type,
-            upsert: false
+    try {
+        const timestamp = Date.now();
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storagePath = `${user.id}/${timestamp}-${safeName}`;
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        // Upload to Storage
+        const { error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(storagePath, buffer, {
+                contentType: file.type,
+                upsert: false
+            });
+
+        if (uploadError) throw new Error("Storage Upload Failed: " + uploadError.message);
+
+        // Insert to DB
+        await db.insert(documents).values({
+            userId: user.id,
+            fileName: file.name,
+            filePath: storagePath,
+            size: file.size,
         });
-
-    if (uploadError) throw new Error("Storage Upload Failed: " + uploadError.message);
-
-    // Insert to DB
-    await db.insert(documents).values({
-        userId: user.id,
-        fileName: file.name,
-        filePath: storagePath,
-        size: file.size,
-    });
+    } catch (error: any) {
+        console.error("Upload Error:", error);
+        throw new Error(error.message || "Failed to upload document");
+    }
 }
 
 export async function getUserDocuments() {
@@ -214,6 +214,31 @@ export async function deleteDocumentAction(id: string, filePath: string) {
 
     // Delete from DB
     await db.delete(documents).where(eq(documents.id, id));
+}
+
+export async function getDocumentDownloadUrlAction(documentId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Fetch document to verify ownership and get path
+    const doc = await db.query.documents.findFirst({
+        where: eq(documents.id, documentId)
+    });
+
+    if (!doc || doc.userId !== user.id) {
+        throw new Error("Document not found");
+    }
+
+    const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(doc.filePath, 60); // 60 seconds validity
+
+    if (error || !data) {
+        throw new Error("Failed to generate download link");
+    }
+
+    return data.signedUrl;
 }
 
 
@@ -259,14 +284,7 @@ export async function analyzeStoredDocumentAction(documentId: string) {
             const result = await mammoth.extractRawText({ buffer });
             text = result.value;
         } else if (lowerName.endsWith('.doc')) {
-            text = await new Promise((resolve, reject) => {
-                officeParser.parseOffice(buffer, (data: any, err: any) => {
-                    if (err) return reject(err);
-                    if (typeof data === 'string') resolve(data);
-                    else if (data && typeof data.toText === 'function') resolve(data.toText());
-                    else resolve(String(JSON.stringify(data)));
-                });
-            });
+            throw new Error("Формат .doc не поддерживается. Пожалуйста, сохраните файл как .docx или .pdf.");
         } else {
             throw new Error("Unsupported file format");
         }

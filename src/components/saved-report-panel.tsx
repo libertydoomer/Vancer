@@ -1,5 +1,5 @@
 
-import { FileText, Calendar, CheckCircle, ChevronRight, Search, AlertCircle, Sparkles, X } from 'lucide-react';
+import { FileText, Calendar, CheckCircle, ChevronRight, Search, AlertCircle, Sparkles, X, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -10,9 +10,9 @@ interface SavedReportPanelProps {
 
 export function SavedReportPanel({ report, onClose }: SavedReportPanelProps) {
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 sm:space-y-8 relative">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 sm:space-y-8 relative print-content">
             {/* Header / Info Bar */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm pr-16">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shrink-0 border border-blue-100">
                         <FileText className="w-6 h-6" />
@@ -29,15 +29,33 @@ export function SavedReportPanel({ report, onClose }: SavedReportPanelProps) {
                         </div>
                     </div>
                 </div>
+
+                <div className="flex items-center gap-2 mt-2 md:mt-0 no-print">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.print()}
+                        className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+                    >
+                        <Download className="w-4 h-4 mr-2 text-slate-500" />
+                        Download PDF
+                    </Button>
+                    <button
+                        onClick={onClose}
+                        className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-lg border border-slate-200 hover:border-red-200 transition-all font-bold text-xs uppercase tracking-wider"
+                    >
+                        Close
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
 
-            {/* Absolute Close Button */}
+            {/* Mobile Absolute Close Button */}
             <button
                 onClick={onClose}
-                className="absolute -top-12 right-0 sm:top-0 sm:right-3 p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-red-500 hover:border-red-200 transition-all shadow-sm z-50 focus:outline-none flex items-center gap-2 group"
+                className="md:hidden absolute -top-12 right-0 p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-red-500 hover:border-red-200 transition-all shadow-sm z-50 focus:outline-none flex items-center gap-2 group no-print"
                 title="Close"
             >
-                <span className="text-xs font-bold uppercase tracking-wider hidden sm:block">Close Report</span>
                 <X className="w-5 h-5" />
             </button>
 
