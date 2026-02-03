@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Copy, Info, Check, Sparkles } from 'lucide-r
 import { Button } from '@/components/ui/button';
 
 export function DemoCredentialsPanel() {
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     const [copiedEmail, setCopiedEmail] = useState(false);
     const [copiedPass, setCopiedPass] = useState(false);
     const [attention, setAttention] = useState(false);
