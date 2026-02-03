@@ -57,7 +57,7 @@ export function DemoCredentialsPanel() {
                 </Button>
             </div>
 
-            <div className="w-96 bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl rounded-r-xl p-6 h-auto max-h-[85vh] overflow-y-auto">
+            <div className="w-[85vw] sm:w-96 bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl rounded-r-xl p-6 h-auto max-h-[85vh] overflow-y-auto">
                 <div className="flex items-center gap-2 mb-6 text-blue-600 border-b border-slate-100 pb-4">
                     <div className="p-2 bg-blue-50 rounded-lg">
                         <Sparkles className="w-5 h-5 fill-blue-600 text-blue-600" />
